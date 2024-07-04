@@ -38,16 +38,25 @@ const userSchema = new Schema(
 );
 
 userSchema.pre("save", async function (next) {
-    if (!this.isModified(this.password)) return next();
-    this.password = await bcrypt.hash(this.password, 10);
+    // if (!this.isModified(this.password)) return next();
+
+    try {
+        const hash = await bcrypt.hash(this.password, 10);
+        this.password = hash;
+        
+    } catch (error) {
+        console.error("Error hashing password:", error);
+        
+    }
+
     next();
 });
 
 userSchema.methods.isPasswordCorrect = async function (password) {
-    return bcrypt.compare(password, this.password);
+    return await bcrypt.compare(password, this.password);
 };
 
-userSchema.methods.generateAccessToken = function () {
+userSchema.methods.generateAccessToken = function() {
     return jwt.sign(
         {
             _id: this._id,
@@ -60,7 +69,7 @@ userSchema.methods.generateAccessToken = function () {
         },
     );
 };
-userSchema.methods.generateRefreshToken = function () {
+userSchema.methods.generateRefreshToken = function() {
     return jwt.sign(
         {
             _id: this._id,
@@ -72,3 +81,6 @@ userSchema.methods.generateRefreshToken = function () {
     );
 };
 export const userModel = mongoose.model("User", userSchema);
+
+
+
